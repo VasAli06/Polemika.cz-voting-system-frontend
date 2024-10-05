@@ -1,14 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LocalPollResults from '../views/LocalPollResults.vue';
 import LocalPollInput from '../views/LocalPollInput.vue';
-import EpisodesView from '../views/EpisodesView.vue'; // Seznam epizod
-import EpisodeDetail from '../views/EpisodeDetail.vue'; // Detail epizody
-import EditLocalPoll from '../views/EditLocalPoll.vue'; // Editace Local Pollu
-import EditOnlinePoll from '../views/EditOnlinePoll.vue'; // Editace Online Pollu
-import EditDuel from '../views/EditDuel.vue'; // Editace Duelu
-import EditPollQuestion from '../views/EditPollQuestion.vue'; // Editace Poll Question
-import PrintCodes from '../views/PrintCodes.vue'; // Tisk kódů
-import Login from '../views/Login.vue'; // Přihlášení
+import Login from '../views/Login.vue'; 
+
+import EpisodesView from '../views/admin/EpisodesView.vue'; 
+import EpisodeDetail from '../views/admin/EpisodeDetail.vue'; 
+import EditLocalPoll from '../views/admin/EditLocalPoll.vue'; 
+import EditOnlinePoll from '../views/admin/EditOnlinePoll.vue'; 
+import EditDuel from '../views/admin/EditDuel.vue';
+import EditPollQuestion from '../views/admin/EditPollQuestion.vue'; 
+import PrintCodes from '../views/admin/PrintCodes.vue'; 
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,7 +21,7 @@ const router = createRouter({
       component: LocalPollResults
     },
     {
-      path: '/hlasovanilocal/:id?/:code?', // Cesta pro home s parametrem id, '?' znamená, že parametr je volitelný
+      path: '/hlasovanilocal/:id?/:code?', 
       name: 'home',
       component: LocalPollInput
     },
@@ -30,9 +32,9 @@ const router = createRouter({
     },
     {
       path: '/admin',
-      component: EpisodesView,  // Hlavní layout admin rozhraní
+      component: EpisodesView,  
       beforeEnter: async (to, from, next) => {
-        const token = localStorage.getItem('token'); // Získání tokenu
+        const token = localStorage.getItem('token'); 
         if (token) {
           try {
             // Ověření tokenu

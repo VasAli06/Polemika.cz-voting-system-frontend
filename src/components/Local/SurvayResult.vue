@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { API_BASE_URL } from '../config'; // Ujistěte se, že máte správnou cestu k API_BASE_URL
+import { API_BASE_URL } from '@/config';
 
 const route = useRoute();
 const pollQuestion = ref(null);

@@ -1,9 +1,9 @@
 <script setup>
-import Survay from '@/components/SurvayInput.vue';
-import Guests from '@/components/GuestsInput.vue';
+import Survay from '@/components/Local/SurvayInput.vue';
+import Guests from '@/components/Local/GuestsInput.vue';
 
 import { ref, onMounted } from 'vue';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '@/config';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -28,15 +28,11 @@ const fetchEpisode = async (id) => {
 
 onMounted(() => {
     const episodeId = route.params.id;
-
-    // Nastavení intervalového volání
     const intervalId = setInterval(() => {
         fetchEpisode(episodeId);
-      
+
     }, 500);
 
-    // Uložení ID intervalu pro pozdější vyčištění
-    // Je dobré mít na paměti, abyste vyčistili interval, když komponenta není aktivní
     return () => clearInterval(intervalId);
 });
 </script>
@@ -47,26 +43,29 @@ onMounted(() => {
 
 
     <Survay v-if="episode && episode.activeLocalVote === 'question'"></Survay>
-    <Guests v-if="episode && episode.activeLocalVote === 'duel'" :episode = episode></Guests>
+    <Guests v-if="episode && episode.activeLocalVote === 'duel'" :episode=episode></Guests>
 
-    <article v-if="episode && episode.activeLocalVote === 'none'" >
-<h1>Neprobíhá právě žádné hlasování.</h1>
+    <article v-if="episode && episode.activeLocalVote === 'none'">
+        <h1>Neprobíhá právě žádné hlasování.</h1>
     </article>
-   
+
 
 </template>
 <style lang="scss" scoped>
-article{
+article {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-h1{
-    font-size: 60px;
-    @media (max-width:500px) {
-        font-size: 30px;
-        text-align: center;
+
+    h1 {
+        font-size: 60px;
+
+        @media (max-width:500px) {
+            font-size: 30px;
+            text-align: center;
+        }
     }
 }
-}</style>
+</style>

@@ -12,7 +12,7 @@
 
 <script>
 import QrcodeVue from 'vue-qrcode';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '@/config';
 
 export default {
   components: {

@@ -1,8 +1,8 @@
 <script setup>
-import Survay from '@/components/SurvayResult.vue';
-import Guests from '@/components/GuestsResult.vue';
+import Survay from '@/components/Local/SurvayResult.vue';
+import Guests from '@/components/Local/GuestsResult.vue';
 import { ref, onMounted } from 'vue';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '@/config';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();

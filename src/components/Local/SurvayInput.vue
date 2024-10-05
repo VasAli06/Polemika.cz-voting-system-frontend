@@ -1,74 +1,69 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useDuelData } from '@/stores/DuelData';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '@/config';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const DuelData = useDuelData();
+const pollQuestion = ref(null); // Zde se budou ukládat data z API
 const errorMessage = ref('');
-const props = defineProps(['episode']);
-const selectedHost = ref(null);
 const hash = ref('');
+const selectedOption = ref(null); // Uložení vybrané možnosti
 const showOverlay = ref(false); // Proměnná pro zobrazení overlay
 const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
 
-// Metoda pro načtení dat o hostech
-const fetchDuelData = async (episodeId) => {
+// Funkce pro načtení otázky a možností
+const fetchPollQuestion = async (episodeId) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/duel`);
+        const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/poll-question`);
         if (!response.ok) {
-            throw new Error('Duel data not found');
+            throw new Error('Poll question not found');
         }
         const data = await response.json();
-        DuelData.hosts = data.guests;
+        pollQuestion.value = data.pollQuestion; // Uložení načtených dat
     } catch (error) {
         errorMessage.value = error.message;
-        console.error('Error fetching duel data:', error);
+        console.error('Error fetching poll question:', error);
     }
 };
 
-// Metoda pro odeslání formuláře
-const submitHandler = async () => {
-    if (!selectedHost.value || !hash.value) {
+// Funkce pro odeslání hlasu
+const submitVote = async () => {
+    if (!selectedOption.value || !hash.value) {
         overlayMessage.value = 'Prosím vyberte hosta a zadejte váš kód.';
         showOverlay.value = true;
         return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/localDuelVote`, {
+        const response = await fetch(`${API_BASE_URL}/episodes/${route.params.id}/localQuestionVote`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                episodeId: route.params.id,
-                hostId: selectedHost.value,
+                optionId: selectedOption.value,
                 hash: hash.value,
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Hlasování se nezdařilo');
+            const data = await response.json();
+            throw new Error(data.error || 'Kód je neplatný nebo již byl použit.');
         }
 
-        const result = await response.json();
-        console.log('Úspěch:', result);
-        overlayMessage.value = 'Hlasování proběhlo úspěšně!';
+        overlayMessage.value = 'Hlasování proběhlo úspěšně!';;
         showOverlay.value = true;
     } catch (error) {
         overlayMessage.value = error.message;
         showOverlay.value = true;
-        console.error('Error submitting vote:', error);
     }
 };
 
 onMounted(() => {
-    const episodeId = route.params.id;
-    fetchDuelData(episodeId);
-    const urlHash = route.params.code;
+    const episodeId = route.params.id; // Získání ID epizody z URL
+    fetchPollQuestion(episodeId);
 
+    const urlHash = route.params.code;
     if (urlHash) {
         hash.value = urlHash;
     }
@@ -78,17 +73,21 @@ onMounted(() => {
 <template>
     <main>
         <h1>Debata</h1>
-        <h2>{{ props.episode.title }}</h2>
-        <p>Vyberte, s kým více sympatizujete:</p>
-        <form @submit.prevent="submitHandler">
+
+        <h2 v-if="pollQuestion">{{ pollQuestion.question }}</h2> <!-- Dynamické zobrazení otázky -->
+
+        <form @submit.prevent="submitVote"> <!-- Změněno na prevent, aby se formulář neodeslal standardně -->
             <div class="row">
-                <template v-for="(host, index) in DuelData.hosts" :key="index">
-                    <label :for="'host' + index">
-                        <img :src="`${API_BASE_URL}/uploads/${host.imageUrl}`" class="hostimg" alt="" />
-                        {{ host.name }}
-                        <input type="radio" :id="'host' + index" name="vote" :value="host.id" v-model="selectedHost">
+                <template v-if="pollQuestion && pollQuestion.options.length > 0"> <!-- Zobrazení možností -->
+                    <label v-for="(option, index) in pollQuestion.options" :key="index" :for="'host' + option.id"
+                        class="option-label">
+                        {{ option.text }} <!-- Text možnosti -->
+                        <input type="radio" :id="'host' + option.id" name="vote" :value="option.id"
+                            v-model="selectedOption">
                     </label>
                 </template>
+
+                <hr>
             </div>
 
             <label for="hash" class="hash">
@@ -98,7 +97,6 @@ onMounted(() => {
             <input type="submit" value="Hlasovat">
         </form>
 
-        <!-- Overlay, který se zobrazí po odeslání hlasování nebo při chybě -->
         <div v-if="showOverlay" class="overlay">
             <div class="overlay-content">
                 <p>{{ overlayMessage }}</p>
@@ -124,23 +122,39 @@ main {
 
 h1 {
     font-family: Roboto;
-    font-size: 55px;
+    font-size: 60px;
     font-weight: 900;
     color: #ffffff;
-    margin-bottom: 5px;
+    margin-bottom: 25px;
+    text-align: center;
 }
 
 h2 {
     font-family: Roboto;
-    font-size: 65px;
+    font-size: 60px;
     font-weight: 900;
     color: #ffffff;
-    margin-bottom: 5px;
+    margin-bottom: 15px;
+    text-align: center;
+
 }
 
 p {
     font-size: 35px;
     margin-bottom: 10px;
+}
+
+.option-label:first-child {
+
+    background-color: rgb(27, 180, 0);
+
+    border-radius: 50px;
+}
+
+.option-label:nth-child(2) {
+    background-color: rgb(198, 0, 0);
+    border-radius: 50px;
+
 }
 
 form {
@@ -155,6 +169,7 @@ form {
     gap: 150px;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    flex-direction: row;
 }
 
 .hostimg {
@@ -162,43 +177,47 @@ form {
     width: 200px;
     height: 200px;
     border-radius: 45px;
-    border: 10px solid var(--left-host);
+    border: 10px solid #FF5F60;
 
 }
 
 .rightimg {
-    border: 10px solid var(--right-host);
+    border: 10px solid #008C72;
 }
 
 hr {
     border: 2px black solid;
 }
 
+
+
 label {
-    width: 300px;
     margin-top: 25px;
     margin-bottom: 25px;
-    font-size: 32px;
+
+    padding: 10px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    font-size: 42px;
+
+    color: white;
     display: flex;
     gap: 15px;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     flex-direction: column;
 }
 
 input[type="radio"] {
     width: 100px;
     height: 50px;
-    accent-color: var(--left-host);
+    accent-color: #000000;
 }
 
-#host2 {
 
-    accent-color: var(--right-host);
-}
 
 input[type="submit"] {
-    color: rgb(255, 255, 255);
+    color: white;
     font-size: 50px;
     border-radius: 50px;
     padding: 20px;
@@ -218,61 +237,38 @@ input[type="submit"]:hover {
     width: auto;
     height: auto;
     color: white;
-    margin-top: 5px;
-    margin-bottom: 5px;
 }
 
 input[type=text] {
     padding: 10px;
     border-radius: 10px;
+    margin-top: 10px;
     text-align: center;
-
-
-
 }
 
 @media (min-width: 950px) {
+
     hr {
         display: none;
     }
 }
 
 @media (max-width: 950px) {
+
+
+
     .row {
         gap: 35px;
     }
 
     body {
-        min-height: 60vh;
+        min-height: 100vh;
         height: auto;
     }
 
     h1 {
         margin-top: 80px;
         font-size: 80px;
-    }
-
-    h2 {
-        font-size: 80px;
-
-    }
-
-    p {
-        font-size: 20px;
-
-    }
-
-    input[type="submit"] {
-        margin-bottom: 50px;
-    }
-}
-
-@media (max-width: 600px) {
-
-
-    h1 {
-        margin-top: 60px;
-        font-size: 70px;
     }
 
     h2 {
@@ -287,46 +283,58 @@ input[type=text] {
 
     input[type="submit"] {
         margin-bottom: 50px;
+    }
+
+    label {}
+}
+
+@media (max-width: 600px) {
+
+
+    h1 {
+        margin-top: 60px;
+        font-size: 70px;
+    }
+
+    h2 {
+        font-size: 50px;
+
+    }
+
+    p {
+        font-size: 20px;
+
+    }
+
+    input[type="submit"] {
+        margin-bottom: 50px;
         font-size: 40px;
         padding: 15px;
     }
 
-    .hostimg {
-        width: 150px;
-        height: 150px;
-        border: 5px solid var(--left-host);
-    }
-
-    .rightimg {
-        border: 5px solid var(--right-host)
-    }
-
     label {
-        width: 190px;
-        font-size: 30px;
+
+        gap: 0px;
+    }
+
+    .no {
+        font-size: 35px;
     }
 
     input[type="radio"] {
-        width: 50px;
+        width: 40px;
+    }
+
+    .yes {
+        font-size: 35px;
+
     }
 }
 
 
 @media (max-width: 420px) {
-    input[type="radio"] {
-        width: 35px;
-    }
-
     .row {
-        gap: 30px;
-    }
-
-    .hostimg {
-
-        width: 100px;
-        height: 100px;
-
-
+        gap: 15px;
     }
 
     h1 {
@@ -335,13 +343,18 @@ input[type=text] {
     }
 
     h2 {
-        font-size: 40px;
+        font-size: 30px;
 
     }
 
     label {
         font-size: 30px;
-        width: 100%;
+    }
+
+    label {}
+
+    input[type="radio"] {
+        width: 30px;
     }
 
 }

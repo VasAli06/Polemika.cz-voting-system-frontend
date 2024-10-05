@@ -1,12 +1,11 @@
 <script setup>
-import { useDuelData } from '@/stores/DuelData';
 import { ref, onMounted, computed } from 'vue';
-import { API_BASE_URL } from '../config'; // Ujistěte se, že máte správnou cestu k API_BASE_URL
+import { API_BASE_URL } from '@/config';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const typedStrings = ref(['ka<span class="diacritics"n>.</span>', 'ka<span class="diacritics"n>?</span>', 'ka<span class="diacritics"n>!</span>']);
-const DuelData = useDuelData();
+let hosts = ref([]);
 const errorMessage = ref(''); // Přidání proměnné pro zobrazení chyb
 
 // Metoda pro načtení dat o hostech
@@ -19,7 +18,7 @@ const fetchDuelData = async (episodeId) => {
         const data = await response.json();
 
         // Uložení hostů do state managementu
-        DuelData.hosts = data.guests;
+        hosts.value = data.guests;
     } catch (error) {
         errorMessage.value = error.message;
         console.error('Error fetching duel data:', error);
@@ -28,7 +27,7 @@ const fetchDuelData = async (episodeId) => {
 
 // Celkový počet hlasů
 const totalVotes = computed(() => {
-    return DuelData.hosts.reduce((acc, host) => acc + host.votesLocal, 0); // Součet všech hlasů
+    return hosts.value.reduce((acc, host) => acc + host.votesLocal, 0); // Součet všech hlasů
 });
 
 // Vypočítat procenta pro každého hosta
@@ -67,7 +66,7 @@ onMounted(() => {
         </article>
 
         <article class="hosts_grid">
-            <section v-for="(host, index) in DuelData.hosts" :key="index">
+            <section v-for="(host, index) in hosts" :key="index">
                 <h2>{{ host.name }}</h2> <!-- Opravený název hosta -->
                 <img :src="`${API_BASE_URL}` + `/uploads/` + host.imageUrl" alt="" class="host-img" />
                 <!-- Dynamické načítání obrázku hosta -->
