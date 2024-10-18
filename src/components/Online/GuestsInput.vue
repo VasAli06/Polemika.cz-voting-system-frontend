@@ -6,11 +6,11 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 let hosts = ref([]);
 const errorMessage = ref('');
-const props = defineProps(['episode']);
 const selectedHost = ref(null);
-const hash = ref('');
+const email = ref('');
 const showOverlay = ref(false); // Proměnná pro zobrazení overlay
 const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
+
 
 // Metoda pro načtení dat o hostech
 const fetchDuelData = async (episodeId) => {
@@ -27,85 +27,81 @@ const fetchDuelData = async (episodeId) => {
     }
 };
 
-// Metoda pro odeslání formuláře
 const submitHandler = async () => {
-    if (!selectedHost.value || !hash.value) {
-        overlayMessage.value = 'Prosím vyberte hosta a zadejte váš kód.';
-        showOverlay.value = true;
-        return;
+  const episodeId = route.params.id;
+
+  if (!email.value || !selectedHost.value) {
+    overlayMessage.value = 'Vyplňte všechny údaje!';
+    showOverlay.value = true;
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/duel/vote-online`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.value,
+        guestId: selectedHost.value,
+      }),
+    });
+
+    if (response.ok) {
+      overlayMessage.value = 'Hlas byl úspěšně odeslán! Zkontrolujte svůj email pro potvrzení.';
+    } else {
+      const errorData = await response.json();
+      overlayMessage.value = `Chyba při odesílání hlasu: ${errorData.error}`;
     }
+  } catch (error) {
+    overlayMessage.value = 'Došlo k chybě při odesílání hlasu.';
+    console.error('Error submitting vote:', error);
+  }
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/localDuelVote`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                episodeId: route.params.id,
-                hostId: selectedHost.value,
-                hash: hash.value,
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Hlasování se nezdařilo');
-        }
-
-        const result = await response.json();
-        console.log('Úspěch:', result);
-        overlayMessage.value = 'Hlasování proběhlo úspěšně!';
-        showOverlay.value = true;
-    } catch (error) {
-        overlayMessage.value = error.message;
-        showOverlay.value = true;
-        console.error('Error submitting vote:', error);
-    }
+  showOverlay.value = true;
 };
+
+
 
 onMounted(() => {
     const episodeId = route.params.id;
     fetchDuelData(episodeId);
-    const urlHash = route.params.code;
 
-    if (urlHash) {
-        hash.value = urlHash;
-    }
 });
 </script>
-
 <template>
     <main>
-        <h1>Debata</h1>
-        <h2>{{ props.episode.title }}</h2>
-        <p>Vyberte, s kým více sympatizujete:</p>
-        <form @submit.prevent="submitHandler">
-            <div class="row">
-                <template v-for="(host, index) in hosts" :key="index">
-                    <label :for="'host' + index">
-                        <img :src="`${API_BASE_URL}/uploads/${host.imageUrl}`" class="hostimg" alt="" />
-                        {{ host.name }}
-                        <input type="radio" :id="'host' + index" name="vote" :value="host.id" v-model="selectedHost">
-                    </label>
-                </template>
-            </div>
-
-            <label for="hash" class="hash">
-                Váš kód:
-                <input type="text" id="hash" name="hash" v-model="hash">
+      <h1>Debata</h1>
+      <p>Vyberte, s kým více sympatizujete:</p>
+      <form @submit.prevent="submitHandler">
+        <div class="row">
+          <template v-for="(host, index) in hosts" :key="index">
+            <label :for="'host' + index">
+              <img :src="`${API_BASE_URL}/uploads/${host.imageUrl}`" class="hostimg" alt="" />
+              {{ host.name }}
+              <input type="radio" :id="'host' + index" name="vote" :value="host.id" v-model="selectedHost">
             </label>
-            <input type="submit" value="Hlasovat">
-        </form>
-
-        <!-- Overlay, který se zobrazí po odeslání hlasování nebo při chybě -->
-        <div v-if="showOverlay" class="overlay">
-            <div class="overlay-content">
-                <p>{{ overlayMessage }}</p>
-                <button @click="showOverlay = false">Zavřít</button>
-            </div>
+          </template>
         </div>
+  
+        <label for="hash" class="hash">
+          Váš email:
+          <input type="email" id="email" name="email" v-model="email">
+        </label>
+        <input type="submit" value="Hlasovat">
+      </form>
+  
+      <!-- Overlay, který se zobrazí po odeslání hlasování nebo při chybě -->
+      <div v-if="showOverlay" class="overlay">
+        <div class="overlay-content">
+          <p>{{ overlayMessage }}</p>
+          <button @click="showOverlay = false">Zavřít</button>
+        </div>
+      </div>
     </main>
-</template>
+  </template>
+x  
 
 
 <style lang="scss" scoped>
@@ -162,7 +158,6 @@ form {
     height: 200px;
     border-radius: 45px;
     border: 10px solid var(--left-host);
-    object-fit: cover;
 
 }
 

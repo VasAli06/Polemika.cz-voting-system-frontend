@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LocalPollResults from '../views/LocalPollResults.vue';
 import LocalPollInput from '../views/LocalPollInput.vue';
 import Login from '../views/Login.vue'; 
+import Online from '../views/Online.vue'; 
 
 import EpisodesView from '../views/admin/EpisodesView.vue'; 
 import EpisodeDetail from '../views/admin/EpisodeDetail.vue'; 
@@ -22,8 +23,13 @@ const router = createRouter({
     },
     {
       path: '/hlasovanilocal/:id?/:code?', 
-      name: 'home',
+      name: 'vote',
       component: LocalPollInput
+    },
+    {
+      path: '/online/:id?', 
+      name: 'home',
+      component: Online
     },
     {
       path: '/login',

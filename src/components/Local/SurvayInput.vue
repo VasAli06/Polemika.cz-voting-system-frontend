@@ -146,13 +146,14 @@ p {
 
 .option-label:first-child {
 
-    background-color: rgb(27, 180, 0);
-
+    background-color: rgb(255, 255, 255);
+    color: black;
     border-radius: 50px;
 }
 
 .option-label:nth-child(2) {
-    background-color: rgb(198, 0, 0);
+    background-color: rgb(255, 255, 255);
+    color: black;
     border-radius: 50px;
 
 }
@@ -348,7 +349,7 @@ input[type=text] {
     }
 
     label {
-        font-size: 30px;
+        font-size: 20px;
     }
 
     label {}

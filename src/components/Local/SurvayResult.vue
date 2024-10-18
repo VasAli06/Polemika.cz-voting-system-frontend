@@ -178,7 +178,7 @@ h1 {
 h2 {
     color: #FFF;
 
-    font-size: 120px;
+    font-size: 60px;
     font-style: normal;
     font-weight: 800;
     line-height: normal;
