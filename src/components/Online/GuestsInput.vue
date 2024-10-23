@@ -100,8 +100,7 @@ onMounted(() => {
         </div>
       </div>
     </main>
-  </template>
-x  
+  </template>  
 
 
 <style lang="scss" scoped>

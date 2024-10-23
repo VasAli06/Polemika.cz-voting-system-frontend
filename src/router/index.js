@@ -3,6 +3,9 @@ import LocalPollResults from '../views/LocalPollResults.vue';
 import LocalPollInput from '../views/LocalPollInput.vue';
 import Login from '../views/Login.vue'; 
 import Online from '../views/Online.vue'; 
+import OnlineVoteCheckDuel from '../views/OnlineVoteCheckDuel.vue'; 
+import OnlineVoteCheckQuestion from '../views/OnlineVoteCheckQuestion.vue'; 
+
 
 import EpisodesView from '../views/admin/EpisodesView.vue'; 
 import EpisodeDetail from '../views/admin/EpisodeDetail.vue'; 
@@ -11,6 +14,7 @@ import EditOnlinePoll from '../views/admin/EditOnlinePoll.vue';
 import EditDuel from '../views/admin/EditDuel.vue';
 import EditPollQuestion from '../views/admin/EditPollQuestion.vue'; 
 import PrintCodes from '../views/admin/PrintCodes.vue'; 
+
 
 
 const router = createRouter({
@@ -31,6 +35,17 @@ const router = createRouter({
       name: 'home',
       component: Online
     },
+    {
+      path: '/overeni-hlasovani-duelu/:token?/:episodeId?', 
+      name: 'vote-check-duel',
+      component: OnlineVoteCheckDuel
+    },
+    {
+      path: '/overeni-hlasovani-otazky/:token?/:episodeId?', 
+      name: 'vote-check-questin',
+      component: OnlineVoteCheckQuestion
+    },
+
     {
       path: '/login',
       name: 'login',
