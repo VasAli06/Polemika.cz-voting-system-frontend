@@ -1,15 +1,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { API_BASE_URL } from '@/config';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
+
 let hosts = ref([]);
 const errorMessage = ref('');
 const selectedHost = ref(null);
 const email = ref('');
-const showOverlay = ref(false); // Proměnná pro zobrazení overlay
-const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
+const agree = ref(false); // Souhlas se zpracováním údajů
+const erorrMessage = ref('');
+const isLoading = ref(false); // Proměnná pro sledování načítání
 
 
 // Metoda pro načtení dat o hostech
@@ -28,38 +31,42 @@ const fetchDuelData = async (episodeId) => {
 };
 
 const submitHandler = async () => {
-  const episodeId = route.params.id;
+    const episodeId = route.params.id;
 
-  if (!email.value || !selectedHost.value) {
-    overlayMessage.value = 'Vyplňte všechny údaje!';
-    showOverlay.value = true;
-    return;
-  }
+    if (!email.value || !selectedHost.value) {
+        erorrMessage.value = 'Prosím vyberte jednoho z hostů!';
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/duel/vote-online`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.value,
-        guestId: selectedHost.value,
-      }),
-    });
-
-    if (response.ok) {
-      overlayMessage.value = 'Hlas byl úspěšně odeslán! Zkontrolujte svůj email pro potvrzení.';
-    } else {
-      const errorData = await response.json();
-      overlayMessage.value = `Chyba při odesílání hlasu: ${errorData.error}`;
+        return;
     }
-  } catch (error) {
-    overlayMessage.value = 'Došlo k chybě při odesílání hlasu.';
-    console.error('Error submitting vote:', error);
-  }
+    isLoading.value = true; // Zobrazení načítací ikony
 
-  showOverlay.value = true;
+    try {
+        const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/duel/vote-online`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email.value,
+                guestId: selectedHost.value,
+            }),
+        });
+
+        if (response.ok) {
+            router.push('/odeslan'); // Změňte na vaši cílovou stránku
+
+        } else {
+            const errorData = await response.json();
+            erorrMessage.value = `${errorData.error}`;
+        }
+
+    } catch (error) {
+        erorrMessage.value = error;
+    }
+    finally {
+        isLoading.value = false; // Skrytí načítací ikony
+    }
+
 };
 
 
@@ -71,53 +78,88 @@ onMounted(() => {
 });
 </script>
 <template>
+    <hr>
+
     <main>
-      <h1>Debata</h1>
-      <p>Vyberte, s kým více sympatizujete:</p>
-      <form @submit.prevent="submitHandler">
-        <div class="row">
-          <template v-for="(host, index) in hosts" :key="index">
-            <label :for="'host' + index">
-              <img :src="`${API_BASE_URL}/uploads/${host.imageUrl}`" class="hostimg" alt="" />
-              {{ host.name }}
-              <input type="radio" :id="'host' + index" name="vote" :value="host.id" v-model="selectedHost">
+        <p class="vote-slogan">Hlasujte i Vy<span>!</span></p>
+        <form @submit.prevent="submitHandler">
+            <div class="row">
+                <template v-for="(host, index) in hosts" :key="index">
+                    <label :for="'host' + index" class="host-label">
+                        <img :src="`${API_BASE_URL}/uploads/${host.imageUrl}`" class="hostimg" alt="" />
+                        {{ host.name }}
+                        <input type="radio" :id="'host' + index" name="vote" :value="host.id" v-model="selectedHost">
+                    </label>
+                </template>
+            </div>
+            <label for="email" class="email">
+                Váš email:
+                <input type="email" id="email" name="email" v-model="email" required
+                    placeholder="vaclav.novak@seznam.cz">
             </label>
-          </template>
-        </div>
-  
-        <label for="hash" class="hash">
-          Váš email:
-          <input type="email" id="email" name="email" v-model="email">
-        </label>
-        <input type="submit" value="Hlasovat">
-      </form>
-  
-      <!-- Overlay, který se zobrazí po odeslání hlasování nebo při chybě -->
-      <div v-if="showOverlay" class="overlay">
-        <div class="overlay-content">
-          <p>{{ overlayMessage }}</p>
-          <button @click="showOverlay = false">Zavřít</button>
-        </div>
-      </div>
+
+            <label for="osobni" class="agree">
+                Souhlasím se zpravováním osobních údajů <input type="checkbox" id="osobni" name="osobni" v-model="agree"
+                    required>
+            </label>
+            <p class="error" v-if="isLoading !== true"> {{ erorrMessage }}</p>
+
+            <input type="submit" value="Hlasovat" :disabled="isLoading" v-if="isLoading !== true">
+
+            <div v-if="isLoading" class="loading-spinner"></div>
+        </form>
+
+
     </main>
-  </template>  
+</template>
 
 
 <style lang="scss" scoped>
+@use "@/assets/colors.scss" as *;
+
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: $primary-color;
+    animation: spin 1s ease infinite;
+    margin: 20px auto;
+    display: block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error {
+    color: red;
+    font-size: 20px;
+}
+
+hr {
+    width: 80%;
+    margin-top: 100px;
+    border: white 3px solid;
+}
+
 main {
-    height: 100vh;
-    font-family: Arial, sans-serif;
     text-align: center;
     background-color: #000000;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 0px;
+    margin-top: 100px;
+
+    @media(max-width:750px) {
+        margin-top: 40px;
+    }
 }
 
 h1 {
-    font-family: Roboto;
     font-size: 55px;
     font-weight: 900;
     color: #ffffff;
@@ -125,7 +167,6 @@ h1 {
 }
 
 h2 {
-    font-family: Roboto;
     font-size: 65px;
     font-weight: 900;
     color: #ffffff;
@@ -138,98 +179,205 @@ p {
 }
 
 form {
-
     align-items: center;
     justify-content: center;
     display: flex;
     flex-direction: column;
+    width: 50%;
+    @media(max-width:750px) {
+        width:100%;
+        overflow: hidden;
+    }
+
+}
+
+
+.vote-slogan {
+    font-size: 100px;
+    margin-bottom: 50px;
+
+    span {
+        color: $accent-color;
+    }
+
+    @media(max-width:750px) {
+        font-size: 40px;
+        margin-bottom: 25px;
+    }
 }
 
 .row {
-    gap: 150px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    display: flex;
+    margin-top: 100px;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+
+    @media (max-width: 800px) {
+        flex-direction: column;
+        margin-top: 0px;
+    }
+
 }
 
-.hostimg {
-
-    width: 200px;
-    height: 200px;
-    border-radius: 45px;
-    border: 10px solid var(--left-host);
-
-}
-
-.rightimg {
-    border: 10px solid var(--right-host);
-}
-
-hr {
-    border: 2px black solid;
-}
-
-label {
-    width: 300px;
+.host-label {
     margin-top: 25px;
     margin-bottom: 25px;
-    font-size: 32px;
+
+    padding: 10px;
+    font-size: 40px;
+
+    color: white;
     display: flex;
-    gap: 15px;
+    flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+
+    input[type="radio"] {
+        width: 60px;
+        height: 30px;
+        accent-color: $accent-color;
+
+        @media(max-width:750px) {
+            width: 50px;
+            height: 20px;
+        }
+
+    }
+
+    @media(max-width:750px) {
+        gap: 10px;
+        font-size: 25px;
+        margin-top: 0px;
+        margin-bottom: -30px;
+    }
+
 }
 
-input[type="radio"] {
-    width: 100px;
-    height: 50px;
-    accent-color: var(--left-host);
+.agree {
+    font-size: 30px;
+
+    @media(max-width:750px) {
+        font-size: 20px;
+        width: 80%;
+        margin-top: 0px;
+        margin-bottom: 0px;
+    }
+
+
 }
 
-#host2 {
+input[type="checkbox"] {
+    width: 40px;
+    height: 20px;
 
-    accent-color: var(--right-host);
+    @media(max-width:750px) {
+        width: 25px;
+        height: 15px;
+    }
+}
+
+.email {
+
+    font-size: 30px;
+
+    @media(max-width:750px) {
+        margin-top: 60px;
+        font-size: 25px;
+    }
+
+}
+
+input[type="email"] {
+    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 100px;
+    width: 150%;
+    font-size: 20px;
+    text-align: center;
+
+    @media(max-width:750px) {
+        width: 300px;
+        font-size: 15px;
+    }
+
+    @media(max-width:380px) {
+        width: 250px;
+    }
+
 }
 
 input[type="submit"] {
-    color: rgb(255, 255, 255);
-    font-size: 50px;
+    color: white;
+    font-size: 30px;
     border-radius: 50px;
-    padding: 20px;
-    border: none;
-    background: #FF6927;
+    padding: 40px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background: black;
+    border: 4px solid $primary-color;
     transition: ease 1s;
     margin-top: 25px;
+
+    @media(max-width:750px) {
+        font-size: 20px;
+
+    }
 
 }
 
 input[type="submit"]:hover {
     transform: scale(112%);
     transition: ease 1s;
+    cursor: pointer;
 }
 
-.hash {
-    width: auto;
-    height: auto;
-    color: white;
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
+.hostimg {
 
-input[type=text] {
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
+    aspect-ratio: 1/1;
+    width: 200px;
+    height: 200px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 3px solid white;
 
-
-
-}
-
-@media (min-width: 950px) {
-    hr {
-        display: none;
+    @media(max-width:750px) {
+        width: 150px;
+        height: 150px;
     }
 }
+
+
+label {
+    margin-top: 25px;
+    margin-bottom: 25px;
+
+    padding: 10px;
+    font-size: 40px;
+
+    color: white;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    input[type="radio"] {
+        width: 60px;
+        height: 30px;
+        accent-color: $accent-color;
+    }
+
+}
+
+
+
+
+
 
 @media (max-width: 950px) {
     .row {
@@ -279,21 +427,7 @@ input[type=text] {
 
     }
 
-    input[type="submit"] {
-        margin-bottom: 50px;
-        font-size: 40px;
-        padding: 15px;
-    }
 
-    .hostimg {
-        width: 150px;
-        height: 150px;
-        border: 5px solid var(--left-host);
-    }
-
-    .rightimg {
-        border: 5px solid var(--right-host)
-    }
 
     label {
         width: 190px;
@@ -315,14 +449,6 @@ input[type=text] {
         gap: 30px;
     }
 
-    .hostimg {
-
-        width: 100px;
-        height: 100px;
-
-
-    }
-
     h1 {
         margin-top: 60px;
         font-size: 55px;
@@ -338,46 +464,5 @@ input[type=text] {
         width: 100%;
     }
 
-}
-
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.overlay-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.overlay-content p {
-    font-size: 1.5rem;
-    color: #000000;
-    margin-bottom: 20px;
-}
-
-.overlay-content button {
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.overlay-content button:hover {
-    background-color: #0056b3;
 }
 </style>

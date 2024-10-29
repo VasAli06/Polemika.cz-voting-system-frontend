@@ -31,7 +31,7 @@ onMounted(() => {
     const intervalId = setInterval(() => {
         fetchEpisode(episodeId);
 
-    }, 500);
+    }, 5000);
 
     return () => clearInterval(intervalId);
 });

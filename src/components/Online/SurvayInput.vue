@@ -1,15 +1,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { API_BASE_URL } from '@/config';
-import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const pollQuestion = ref(null); // Zde se budou ukládat data z API
+const router = useRouter();
+
+const pollQuestion = ref(null);
 const errorMessage = ref('');
-const selectedOption = ref(null); // Uložení vybrané možnosti
-const email = ref(''); // Uložení emailu
-const showOverlay = ref(false); // Proměnná pro zobrazení overlay
-const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
+const selectedOption = ref(null);
+const email = ref('');
+const agree = ref(false); // Souhlas se zpracováním údajů
+const erorrMessage = ref('');
+const isLoading = ref(false); // Proměnná pro sledování načítání
 
 // Funkce pro načtení otázky a možností
 const fetchPollQuestion = async (episodeId) => {
@@ -19,7 +22,8 @@ const fetchPollQuestion = async (episodeId) => {
             throw new Error('Poll question not found');
         }
         const data = await response.json();
-        pollQuestion.value = data.pollQuestion; // Uložení načtených dat
+        data.pollQuestion.options = data.pollQuestion.options.sort((a, b) => a.id - b.id);
+        pollQuestion.value = data.pollQuestion;
     } catch (error) {
         errorMessage.value = error.message;
         console.error('Error fetching poll question:', error);
@@ -29,10 +33,11 @@ const fetchPollQuestion = async (episodeId) => {
 // Funkce pro odeslání hlasu
 const submitVote = async () => {
     if (!selectedOption.value || !email.value) {
-        overlayMessage.value = 'Prosím vyberte hosta a zadejte váš email.';
-        showOverlay.value = true;
+        erorrMessage.value = 'Prosím vyberte jednu z možností!';
         return;
     }
+
+    isLoading.value = true; // Zobrazení načítací ikony
 
     try {
         const response = await fetch(`${API_BASE_URL}/episodes/${route.params.id}/question/vote-online`, {
@@ -51,72 +56,116 @@ const submitVote = async () => {
             throw new Error(data.error || 'Email je neplatný nebo již byl použit.');
         }
 
-        overlayMessage.value = 'Hlasování proběhlo úspěšně! Zkontrolujte svůj email pro potvrzení.';
-        showOverlay.value = true;
+
+        router.push('/odeslan'); // Změňte na vaši cílovou stránku
     } catch (error) {
-        overlayMessage.value = error.message;
-        showOverlay.value = true;
+        erorrMessage.value = error.message;
+    } finally {
+        isLoading.value = false; // Skrytí načítací ikony
     }
 };
 
 onMounted(() => {
-    const episodeId = route.params.id; // Získání ID epizody z URL
+    const episodeId = route.params.id;
+
     fetchPollQuestion(episodeId);
 });
 </script>
 
 <template>
+    <hr>
     <main>
-        <h1>Debata</h1>
+        <p class="vote-slogan">Hlasujte i Vy<span>!</span></p>
+        <h2 v-if="pollQuestion">{{ pollQuestion.question }}</h2>
 
-        <h2 v-if="pollQuestion">{{ pollQuestion.question }}</h2> <!-- Dynamické zobrazení otázky -->
-
-        <form @submit.prevent="submitVote"> <!-- Změněno na prevent, aby se formulář neodeslal standardně -->
+        <form @submit.prevent="submitVote">
             <div class="row">
-                <template v-if="pollQuestion && pollQuestion.options.length > 0"> <!-- Zobrazení možností -->
+                <template v-if="pollQuestion && pollQuestion.options.length > 0">
                     <label v-for="(option, index) in pollQuestion.options" :key="index" :for="'host' + option.id"
                         class="option-label">
-                        {{ option.text }} <!-- Text možnosti -->
+                        {{ option.text }}
                         <input type="radio" :id="'host' + option.id" name="vote" :value="option.id"
                             v-model="selectedOption">
                     </label>
                 </template>
-
-                <hr>
             </div>
 
             <label for="email" class="email">
                 Váš email:
-                <input type="email" id="email" name="email" v-model="email" required>
+                <input type="email" id="email" name="email" v-model="email" required
+                    placeholder="vaclav.novak@seznam.cz">
             </label>
-            <input type="submit" value="Hlasovat">
-        </form>
 
-        <div v-if="showOverlay" class="overlay">
-            <div class="overlay-content">
-                <p>{{ overlayMessage }}</p>
-                <button @click="showOverlay = false">Zavřít</button>
-            </div>
-        </div>
+            <label for="osobni" class="agree">
+                Souhlasím se zpravováním osobních údajů <input type="checkbox" id="osobni" name="osobni" v-model="agree"
+                    required>
+            </label>
+            <p class="error" v-if="isLoading !== true"> {{ erorrMessage }}</p>
+
+            <input type="submit" value="Hlasovat" :disabled="isLoading" v-if="isLoading !== true">
+
+            <!-- Načítací ikona -->
+            <div v-if="isLoading" class="loading-spinner"></div>
+
+        </form>
     </main>
 </template>
 
+
 <style lang="scss" scoped>
+@use "@/assets/colors.scss" as *;
+
+
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: $primary-color;
+    animation: spin 1s ease infinite;
+    margin: 20px auto;
+    display: block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error {
+    color: red;
+    font-size: 20px;
+}
+
+hr {
+    width: 80%;
+    margin-top: 100px;
+    border: white 3px solid;
+
+    @media(max-width:750px) {
+        border: white 2px solid;
+        margin-top: 40px;
+    }
+}
+
 main {
-    height: 100vh;
-    font-family: Arial, sans-serif;
     text-align: center;
+    margin-top: 100px;
     background-color: #000000;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 0px;
+
+    @media(max-width:750px) {
+        margin-top: 40px;
+    }
+
 }
 
 h1 {
-    font-family: Roboto;
-    font-size: 60px;
+    font-size: 30px;
     font-weight: 900;
     color: #ffffff;
     margin-bottom: 25px;
@@ -124,7 +173,6 @@ h1 {
 }
 
 h2 {
-    font-family: Roboto;
     font-size: 60px;
     font-weight: 900;
     color: #ffffff;
@@ -138,62 +186,47 @@ p {
     margin-bottom: 10px;
 }
 
-.option-label:first-child {
-
-    background-color: rgb(255, 255, 255);
-    color: black;
-    border-radius: 50px;
-}
-
-.option-label:nth-child(2) {
-    background-color: rgb(255, 255, 255);
-    color: black;
-    border-radius: 50px;
-
-}
-
 form {
-
+    margin-top: 30px;
     align-items: center;
     justify-content: center;
     display: flex;
     flex-direction: column;
 }
 
+.vote-slogan {
+    font-size: 100px;
+    margin-bottom: 50px;
+
+    span {
+        color: $accent-color;
+    }
+
+    @media(max-width:750px) {
+        font-size: 40px;
+        margin-bottom: 25px;
+    }
+}
+
 .row {
     gap: 150px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    flex-direction: row;
-}
+    display: flex;
+    flex-wrap: wrap;
 
-.hostimg {
+    @media(max-width:750px) {
 
-    width: 200px;
-    height: 200px;
-    border-radius: 45px;
-    border: 10px solid #FF5F60;
+        flex-direction: row;
+    justify-content: center;
+    }
 
 }
-
-.rightimg {
-    border: 10px solid #008C72;
-}
-
-hr {
-    border: 2px black solid;
-}
-
-
 
 label {
     margin-top: 25px;
     margin-bottom: 25px;
 
     padding: 10px;
-    padding-top: 30px;
-    padding-bottom: 30px;
-    font-size: 42px;
+    font-size: 40px;
 
     color: white;
     display: flex;
@@ -201,38 +234,101 @@ label {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+
+    @media(max-width:750px) {
+        margin-top: 0px;
+        margin-bottom: 0px;
+        font-size: 30px;
+    }
+
+    input[type="radio"] {
+        width: 60px;
+        height: 30px;
+        accent-color: $accent-color;
+
+        @media(max-width:750px) {
+            width: 50px;
+            height: 20px;
+        }
+    }
+
 }
 
-input[type="radio"] {
-    width: 100px;
-    height: 50px;
-    accent-color: #000000;
+.agree {
+    font-size: 30px;
+
+    @media(max-width:750px) {
+        font-size: 20px;
+        width: 80%;
+        margin-top: 0px;
+        margin-bottom: 0px;
+    }
 }
 
+input[type="checkbox"] {
+    width: 40px;
+    height: 20px;
 
+    @media(max-width:750px) {
+        width: 25px;
+        height: 15px;
+    }
+}
+
+.email {
+    font-size: 30px;
+
+    @media(max-width:750px) {
+        margin-top: 20px;
+        font-size: 25px;
+    }
+}
+
+input[type="email"] {
+    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 100px;
+    width: 150%;
+    font-size: 20px;
+    text-align: center;
+
+    @media(max-width:750px) {
+        width: 300px;
+        font-size: 15px;
+
+    }
+
+    @media(max-width:380px) {
+        width: 250px;
+    }
+}
 
 input[type="submit"] {
     color: white;
-    font-size: 50px;
+    font-size: 30px;
     border-radius: 50px;
-    padding: 20px;
-    border: none;
-    background: #FF6927;
+    padding: 40px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background: black;
+    border: 4px solid $primary-color;
     transition: ease 1s;
     margin-top: 25px;
 
+    @media(max-width:750px) {
+        font-size: 20px;
+
+    }
 }
 
 input[type="submit"]:hover {
     transform: scale(112%);
     transition: ease 1s;
+    cursor: pointer;
 }
 
-.hash {
-    width: auto;
-    height: auto;
-    color: white;
-}
+
 
 input[type=text] {
     padding: 10px;
@@ -241,12 +337,6 @@ input[type=text] {
     text-align: center;
 }
 
-@media (min-width: 950px) {
-
-    hr {
-        display: none;
-    }
-}
 
 @media (max-width: 950px) {
 
@@ -301,16 +391,7 @@ input[type=text] {
 
     }
 
-    input[type="submit"] {
-        margin-bottom: 50px;
-        font-size: 40px;
-        padding: 15px;
-    }
 
-    label {
-
-        gap: 0px;
-    }
 
     .no {
         font-size: 35px;
@@ -342,56 +423,10 @@ input[type=text] {
 
     }
 
-    label {
-        font-size: 20px;
-    }
-
-    label {}
 
     input[type="radio"] {
         width: 30px;
     }
 
-}
-
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.overlay-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.overlay-content p {
-    font-size: 1.5rem;
-    color: #000000;
-    margin-bottom: 20px;
-}
-
-.overlay-content button {
-    padding: 10px 20px;
-    font-size: 1.2rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.overlay-content button:hover {
-    background-color: #0056b3;
 }
 </style>

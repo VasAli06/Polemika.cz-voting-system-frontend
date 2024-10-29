@@ -12,6 +12,7 @@ const hash = ref('');
 const showOverlay = ref(false); // Proměnná pro zobrazení overlay
 const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
 
+
 // Metoda pro načtení dat o hostech
 const fetchDuelData = async (episodeId) => {
     try {

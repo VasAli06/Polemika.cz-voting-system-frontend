@@ -16,6 +16,8 @@ const fetchPollQuestion = async (episodeId) => {
             throw new Error('Poll question not found');
         }
         const data = await response.json();
+        //  pollQuestion.value = data.pollQuestion;
+        data.pollQuestion.options = data.pollQuestion.options.sort((a, b) => a.id - b.id);
         pollQuestion.value = data.pollQuestion;
     } catch (error) {
         errorMessage.value = error.message;
@@ -23,7 +25,6 @@ const fetchPollQuestion = async (episodeId) => {
     }
 };
 
-// Vypočítání celkového počtu hlasů
 const totalVotes = computed(() => {
     if (!pollQuestion.value || !pollQuestion.value.options) return 0;
     return pollQuestion.value.options.reduce((sum, option) => {
@@ -36,6 +37,7 @@ let intervalId = null;
 
 onMounted(() => {
     const episodeId = route.params.id; // Získání ID epizody z URL
+
     fetchPollQuestion(episodeId);
 
     // Nastavení intervalu pro obnovu dat každých 0,5 sekundy
@@ -53,17 +55,17 @@ onBeforeUnmount(() => {
 <template>
     <main class="container">
         <div class="logo_wraper">
-                <img src="/headline.svg" alt="">
-                <VueTyped :strings="typedStrings" :typeSpeed="500" :backSpeed="500" :loop="true"
-                    class="animation-letters" />
-            </div>
+            <img src="/headline.svg" alt="">
+            <VueTyped :strings="typedStrings" :typeSpeed="500" :backSpeed="500" :loop="true"
+                class="animation-letters" />
+        </div>
         <h1 v-if="pollQuestion">{{ pollQuestion.question }}</h1>
         <article v-if="pollQuestion" class="grid">
-       
+
             <article class="middle">
-                
+
                 <img src="/VS.png" alt="" class="vs vs-an" id="vsid">
-          
+
                 <p class="vote-count" v-if="totalVotes == 0">Zatím žádné hlasy.</p>
                 <p class="vote-count" v-if="totalVotes !== 0">Počet hlasů: {{ totalVotes }} </p>
 
@@ -87,26 +89,28 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 @use "@/assets/colors.scss" as *;
+
 .logo_wraper {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        color: white;
-    }
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
 
-    .logo_wraper .animation-letters {
-        font-size: 111.61px;
-    }
+.logo_wraper .animation-letters {
+    font-size: 111.61px;
+}
 
-    .logo_wraper img {
-        width: 450px;
-    }
+.logo_wraper img {
+    width: 450px;
+}
 
-    .diacritics {
-        color: #FF6927;
+.diacritics {
+    color: #FF6927;
 
-    }
+}
+
 .container {
     height: 100vh;
     display: flex;
