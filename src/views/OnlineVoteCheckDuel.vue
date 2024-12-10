@@ -5,22 +5,22 @@
         <h1>Váš hlas byl již započten.</h1>
       </section>
 
-      <p>Nejspíše jste již v této epizodě hlasoval, či odkaz v zasleném emailu je neplatný. Zkuste proces hlasování
-        opakovat znova.
+      <p>Nejspíše jste již v této epizodě hlasovali, či odkaz v zasleném emailu již není platný. Zkuste proces hlasování
+        opakovat znovu.
       </p>
       <hr>
-      <p>Pokud si myslíte, že v hlasovacím systému je chyba obraťte se na email adresu níže.</p>
+      <p>Pokud si myslíte, že v hlasovacím systému je chyba obraťte se na emilovou adresu níže.</p>
       <a class="email" href="mailto:naxera@polemika.cz">naxera@polemika.cz</a>
 
       <hr>
-      <router-link to="/" class="email">Zpět na hlavní stráku</router-link>
+      <router-link to="/" class="email">Zpět na hlavní stránku</router-link>
     </article>
     <article class="success" v-if="message">
       <section>
         <h1>Hlasování bylo úspěšně dokončeno</h1>
       </section>
 
-      <p>Děkujeme, že jste se účastnili hlasování. Pomocí tlačítka níže se můžete vrátit zpět ke všem dílům Polemiky.
+      <p>Děkujeme, že jste se účastnili hlasování. Pomocí tlačítka pod výsledky níže se můžete vrátit zpět ke všem dílům Polemiky.
       </p>
 
       <GuestesResult></GuestesResult>

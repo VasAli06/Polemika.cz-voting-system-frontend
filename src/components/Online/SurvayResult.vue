@@ -44,7 +44,7 @@ onMounted(() => {
 
     intervalId = setInterval(() => {
         fetchPollQuestion(episodeId);
-    }, 3000);
+    }, 30000);
 });
 
 onBeforeUnmount(() => {

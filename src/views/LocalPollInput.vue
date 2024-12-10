@@ -28,6 +28,8 @@ const fetchEpisode = async (id) => {
 
 onMounted(() => {
     const episodeId = route.params.id;
+    fetchEpisode(episodeId);
+
     const intervalId = setInterval(() => {
         fetchEpisode(episodeId);
 

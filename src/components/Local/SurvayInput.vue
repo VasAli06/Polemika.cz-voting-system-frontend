@@ -4,25 +4,32 @@ import { API_BASE_URL } from '@/config';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
-const pollQuestion = ref(null); // Zde se budou ukládat data z API
+const pollQuestion = ref(null);
 const errorMessage = ref('');
 const hash = ref('');
-const selectedOption = ref(null); // Uložení vybrané možnosti
-const showOverlay = ref(false); // Proměnná pro zobrazení overlay
-const overlayMessage = ref(''); // Zpráva, která se zobrazí v overlay
+const selectedOption = ref(null);
+const showOverlay = ref(false);
+const overlayMessage = ref('');
+const isLoading = ref(true); // Nová proměnná pro zobrazení spinneru
+console.log('Komponenta se načítá...'); // Debugovací hlášení
 
 // Funkce pro načtení otázky a možností
 const fetchPollQuestion = async (episodeId) => {
+    isLoading.value = true; // Zobrazí spinner
     try {
+        console.log('Načítání otázky pro episodeId:', episodeId); // Debugovací hlášení
+
         const response = await fetch(`${API_BASE_URL}/episodes/${episodeId}/poll-question`);
         if (!response.ok) {
             throw new Error('Poll question not found');
         }
         const data = await response.json();
-        pollQuestion.value = data.pollQuestion; // Uložení načtených dat
+        pollQuestion.value = data.pollQuestion;
     } catch (error) {
         errorMessage.value = error.message;
         console.error('Error fetching poll question:', error);
+    } finally {
+        isLoading.value = false; // Skryje spinner po načtení dat
     }
 };
 
@@ -51,7 +58,7 @@ const submitVote = async () => {
             throw new Error(data.error || 'Kód je neplatný nebo již byl použit.');
         }
 
-        overlayMessage.value = 'Hlasování proběhlo úspěšně!';;
+        overlayMessage.value = 'Hlasování proběhlo úspěšně!';
         showOverlay.value = true;
     } catch (error) {
         overlayMessage.value = error.message;
@@ -60,7 +67,9 @@ const submitVote = async () => {
 };
 
 onMounted(() => {
-    const episodeId = route.params.id; // Získání ID epizody z URL
+    console.log('Komponenta byla namontována.'); // Debugovací hlášení
+
+    const episodeId = route.params.id;
     fetchPollQuestion(episodeId);
 
     const urlHash = route.params.code;
@@ -72,30 +81,38 @@ onMounted(() => {
 
 <template>
     <main>
-        <h1>Debata</h1>
+        <h1>Debata</h1> <!-- Tento nadpis by se měl vždy zobrazit -->
 
-        <h2 v-if="pollQuestion">{{ pollQuestion.question }}</h2> <!-- Dynamické zobrazení otázky -->
+        <div v-if="isLoading" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Načítání...</p>
+        </div>
 
-        <form @submit.prevent="submitVote"> <!-- Změněno na prevent, aby se formulář neodeslal standardně -->
-            <div class="row">
-                <template v-if="pollQuestion && pollQuestion.options.length > 0"> <!-- Zobrazení možností -->
-                    <label v-for="(option, index) in pollQuestion.options" :key="index" :for="'host' + option.id"
-                        class="option-label">
-                        {{ option.text }} <!-- Text možnosti -->
-                        <input type="radio" :id="'host' + option.id" name="vote" :value="option.id"
-                            v-model="selectedOption">
-                    </label>
-                </template>
+        <div v-else>
+            <h2 v-if="pollQuestion">{{ pollQuestion.question }}</h2>
+            <p v-else-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+            <p v-else>Data nejsou k dispozici.</p> <!-- Zobrazení zprávy, když nejsou data -->
 
-                <hr>
-            </div>
+            <form v-if="pollQuestion" @submit.prevent="submitVote">
+                <div class="row">
+                    <template v-if="pollQuestion.options && pollQuestion.options.length > 0">
+                        <label v-for="(option, index) in pollQuestion.options" :key="index" :for="'host' + option.id"
+                            class="option-label">
+                            {{ option.text }}
+                            <input type="radio" :id="'host' + option.id" name="vote" :value="option.id"
+                                v-model="selectedOption">
+                        </label>
+                    </template>
+                    <hr>
+                </div>
 
-            <label for="hash" class="hash">
-                Váš kód:
-                <input type="text" id="hash" name="hash" v-model="hash">
-            </label>
-            <input type="submit" value="Hlasovat">
-        </form>
+                <label for="hash" class="hash">
+                    Váš kód:
+                    <input type="text" id="hash" name="hash" v-model="hash">
+                </label>
+                <input type="submit" value="Hlasovat">
+            </form>
+        </div>
 
         <div v-if="showOverlay" class="overlay">
             <div class="overlay-content">
@@ -106,8 +123,53 @@ onMounted(() => {
     </main>
 </template>
 
+<style>
+/* Styl spinneru */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
 
-<style lang="scss" scoped>
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+}
+</style>
+
+<style scoped lang="scss">
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #007BFF; /* Můžeš nahradit $primary-color barvou */
+    animation: spin 1s ease infinite;
+    margin: 20px auto;
+    display: block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
 main {
     height: 100vh;
     font-family: Arial, sans-serif;

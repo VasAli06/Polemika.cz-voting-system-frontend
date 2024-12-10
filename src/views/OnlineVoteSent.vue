@@ -1,13 +1,13 @@
 <template>
 
     <h1>Váš hlas ještě <span>NEBYL</span> započten!</h1>
-    <p class="text">Pro dokončení hlasování navštivte Vaší email schránku do které jsme vám zaslali potvrzovací email.
+    <p class="text">Pro dokončení hlasování navštivte Vaši emailovou schránku, do které jsme vám zaslali potvrzovací email.
     </p>
 
     <article class="workflow">
         <section>
             <i class="fa-solid fa-envelope"></i>
-            <p>Otevřete svoji email schránku</p>
+            <p>Otevřete svoji emailovou schránku</p>
         </section>
         <img src="/arrow2.png" alt="">
 
@@ -18,7 +18,7 @@
         <img src="/arrow.png" alt="">
         <section>
             <i class="fa-solid fa-check"></i>
-            <p>Klikněte na tlačítko “Potvrdit Hlas”</p>
+            <p>Klikněte na tlačítko “Potvrdit hlas”</p>
         </section>
     </article>
 

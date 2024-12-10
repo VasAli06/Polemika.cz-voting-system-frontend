@@ -13,7 +13,7 @@
       <a class="email" href="mailto:naxera@polemika.cz">naxera@polemika.cz</a>
 
       <hr>
-      <router-link to="/" class="email">Zpět na hlavní stráku</router-link>
+      <router-link to="/" class="email">Zpět na hlavní stránku</router-link>
     </article>
 
     <article class="success" v-if="message">
@@ -21,7 +21,7 @@
         <h1>Hlasování bylo úspěšně dokončeno</h1>
       </section>
 
-      <p>Děkujeme, že jste se účastnili hlasování. Pomocí tlačítka níže se můžete vrátit zpět ke všem dílům Polemiky.
+      <p>Děkujeme, že jste se účastnili hlasování. Pomocí tlačítka pod výsledky níže se můžete vrátit zpět ke všem dílům Polemiky.
       </p>
       <SurvayResult></SurvayResult>
 

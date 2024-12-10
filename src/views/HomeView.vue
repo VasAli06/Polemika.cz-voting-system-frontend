@@ -27,12 +27,12 @@
 
     <section>
 
-      <p>Na tomto webu Vám nabízíme příležitost vyjádřit Váš názor stejně jako to mohou dělat diváci na živém natáčení
+      <p>Na tomto webu Vám nabízíme příležitost vyjádřit Váš názor, stejně jako to mohou dělat diváci na živém natáčení
         pořadu Polemika!</p>
-      <p> Ke každé akci, kterou pořádáme bývají zpravidla dva typy interakcí: Duely a Ankety.</p>
+      <p> Ke každé akci kterou pořádáme bývají zpravidla dva typy interakcí: Souboje a Ankety.</p>
 
-      <p> Ankteta obsahuje nějakou tezi, která je spjatá s tématem debaty a nabídku různých odpovědí.</p>
-      <p> V duelu můžete hlasovat pro hosta, se kterým více sympatizujete.</p>
+      <p> Ankteta obsahuje nějakou tezi s nabídku různých odpovědí, které jsou spjaty s tématem debaty.</p>
+      <p> V souboji můžete hlasovat pro hosta, se kterým více sympatizujete.</p>
 
 
     </section>

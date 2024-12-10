@@ -1,11 +1,19 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
 
+// Získání aktuální URL cesty
+const route = useRoute()
+
+// Podmínka pro skrytí header a footer na konkrétních URL
+const hideHeaderFooter = computed(() => {
+  return /^\/(localhlasovani\/vysledky|hlasovanilocal)\/\d+$/.test(route.path)
+})
 
 </script>
-
 <template>
-  <header>
+  <!-- Podmíněné zobrazení headeru -->
+  <header v-if="!hideHeaderFooter">
     <Router-link to="/"> <i class="fa-solid fa-house"></i></Router-link>
 
     <h1>Hlasovací systém <div class="logo_wraper">
@@ -14,17 +22,12 @@ import { RouterView } from 'vue-router'
         <img src="/head.svg" alt="hlava Polemika">
       </div>
     </h1>
-
-
-
   </header>
 
   <RouterView />
 
-
-  <footer>
-
-
+  <!-- Podmíněné zobrazení footeru -->
+  <footer v-if="!hideHeaderFooter">
     <article class="logo_container">
       <div class="logo_wraper">
         <div class="black"></div>
@@ -34,27 +37,21 @@ import { RouterView } from 'vue-router'
     </article>
 
     <article class="social_and_partners">
-
       <section class="social">
         <a href="https://www.youtube.com/channel/UCEgbdConitjQsGVflcLhCmg"><i class="fa-brands fa-youtube"></i></a>
         <a href="https://www.instagram.com/polemika.cz/"><i class="fa-brands fa-instagram"></i></a>
-
         <a href="https://www.facebook.com/people/Polemikacz/61555003615688/"><i class="fa-brands fa-facebook"></i></a>
       </section>
 
       <section class="logos">
         <a href="https://www.nextzone.io/"> <img src="/nextzone_logo.png" class="nextzone" alt="logo NextZone"></a>
-        <a href="https://snempraha.cz/"> <img class="snem" src="/logosnem.png"
-            alt=" logo Středoškolského Sněmu Prahy"></a>
-        <a href="https://www.ssps.cz/"> <img src="/ssps_logo.png" class="ssps"
-            alt="Logo Smíchovské střední průmyslové školy"></a>
+        <a href="https://snempraha.cz/"> <img class="snem" src="/logosnem.png" alt=" logo Středoškolského Sněmu Prahy"></a>
+        <a href="https://www.ssps.cz/"> <img src="/ssps_logo.png" class="ssps" alt="Logo Smíchovské střední průmyslové školy"></a>
       </section>
-
-
     </article>
-
   </footer>
 </template>
+
 
 <style lang="scss">
 @use "@/assets/colors.scss" as *;

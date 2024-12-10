@@ -49,7 +49,7 @@ onMounted(() => {
     // Nastavení intervalu pro obnovení dat každých 0.5 sekundy
     intervalId = setInterval(() => {
         fetchDuelData(episodeId);
-    }, 3000); // Obnovení každých 500 ms
+    }, 30000); // Obnovení každých 500 ms
 });
 </script>
 
